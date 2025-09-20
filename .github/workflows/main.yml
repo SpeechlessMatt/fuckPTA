@@ -23,18 +23,18 @@ jobs:
         include:
           - os: windows-latest
             spec: main.spec
-            artifact: MyApp-Windows.exe
-            name: MyApp-Windows
+            artifact: fuckPTA-Windows.exe
+            name: fuckPTA-Windows
 
           - os: ubuntu-latest
             spec: main.spec
-            artifact: MyApp-Linux
-            name: MyApp-Linux
+            artifact: fuckPTA-Linux
+            name: fuckPTA-Linux
 
           - os: macos-13
             spec: main.spec
-            artifact: MyApp-macOS
-            name: MyApp-macOS
+            artifact: fuckPTA-macOS
+            name: fuckPTA-macOS
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -50,7 +50,7 @@ jobs:
         with:
           spec: ${{ matrix.spec }}
           requirements: requirements.txt
-          options: --onefile --name "fuckPTA"
+          options: --onefile --name ${{matrix.artifact}}
           upload_exe_with_name: ${{ matrix.name }}
 
       - name: Upload artifact
@@ -80,7 +80,7 @@ jobs:
           name: Release ${{ needs.meta.outputs.ver }}
           files: |
             artifacts/MyApp-Windows/fuckPTA-Windows.exe
-            artifacts/MyApp-Linux/MyApp-Linux
-            artifacts/MyApp-macOS/MyApp-macOS
+            artifacts/MyApp-Linux/fuckPTA-Linux
+            artifacts/MyApp-macOS/fuckPTA-macOS
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
