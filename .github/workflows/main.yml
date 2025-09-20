@@ -62,11 +62,16 @@ jobs:
   release:
     needs: [meta, build]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+
+      - name: DEBUG - show what we have
+        run: find artifacts -type f -ls
 
       - name: Create Release & Upload assets
         uses: softprops/action-gh-release@v2
