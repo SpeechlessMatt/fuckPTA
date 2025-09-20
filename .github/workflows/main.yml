@@ -5,6 +5,13 @@ on:
     tags: [ 'v*' ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
+env:
+  PYTHON_VERSION: '3.10'
+  APP_NAME: 'MyApp'
+
 jobs:
   meta:
     runs-on: ubuntu-latest
@@ -12,45 +19,49 @@ jobs:
       ver: ${{ steps.get.outputs.ver }}
     steps:
       - id: get
-        run: |
-          TAG=${GITHUB_REF#refs/tags/}
-          echo "ver=$TAG" >> $GITHUB_OUTPUT
-          
+        run: echo "ver=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
   build:
     needs: meta
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: windows-latest
-            spec: main.spec
-            artifact: MyApp-Windows.exe
-            name: MyApp-Windows
+            artifact: ${{ env.APP_NAME }}.exe
+            name: ${{ env.APP_NAME }}-Windows
 
           - os: ubuntu-latest
-            spec: main.spec
-            artifact: MyApp-Linux
-            name: MyApp-Linux
+            artifact: ${{ env.APP_NAME }}
+            name: ${{ env.APP_NAME }}-Linux
 
           - os: macos-latest
-            spec: main.spec
-            artifact: MyApp-macOS
-            name: MyApp-macOS
+            artifact: ${{ env.APP_NAME }}
+            name: ${{ env.APP_NAME }}-macOS
 
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - name: Fix missing libintl (macOS only)
+        if: runner.os == 'macOS'
+        run: brew install gettext && brew link --force gettext
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - run: python -m pip install --upgrade pip
 
       - name: Build with PyInstaller
         uses: sayyid5416/pyinstaller@v1
         with:
-          spec: ${{ matrix.spec }}
+          spec: main.py
           requirements: requirements.txt
-          options: --onefile --name MyApp
+          options: --onefile --name ${{ env.APP_NAME }}
           upload_exe_with_name: ${{ matrix.name }}
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.name }}
           path: dist/${{ matrix.artifact }}
@@ -59,19 +70,14 @@ jobs:
     needs: [meta, build]
     runs-on: ubuntu-latest
     steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           path: artifacts
 
-      - name: Create Release & Upload assets
-        uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.meta.outputs.ver }}
           name: Release ${{ needs.meta.outputs.ver }}
-          files: |
-            artifacts/MyApp-Windows/MyApp-Windows.exe
-            artifacts/MyApp-Linux/MyApp-Linux
-            artifacts/MyApp-macOS/MyApp-macOS
+          files: artifacts/*/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
