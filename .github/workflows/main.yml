@@ -59,12 +59,6 @@ jobs:
           mv dist/main${{ runner.os == 'Windows' && '.exe' || '' }} \
              dist/${{ matrix.artifact }}
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.name }}
-          path: dist/${{ matrix.artifact }}
-
   release:
     needs: [meta, build]
     runs-on: ubuntu-latest
@@ -85,8 +79,8 @@ jobs:
           tag_name: ${{ needs.meta.outputs.ver }}
           name: Release ${{ needs.meta.outputs.ver }}
           files: |
-            artifacts/MyApp-Windows/fuckPTA-Windows.exe
-            artifacts/MyApp-Linux/fuckPTA-Linux
-            artifacts/MyApp-macOS/fuckPTA-macOS
+            artifacts/fuckPTA-Windows/fuckPTA-Windows.exe
+            artifacts/fuckPTA-Linux/fuckPTA-Linux
+            artifacts/fuckPTA-macOS/fuckPTA-macOS
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
