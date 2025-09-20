@@ -50,7 +50,7 @@ jobs:
         with:
           spec: ${{ matrix.spec }}
           requirements: requirements.txt
-          options: --onefile --name MyApp
+          options: --onefile --name "fuckPTA"
           upload_exe_with_name: ${{ matrix.name }}
 
       - name: Upload artifact
@@ -79,7 +79,7 @@ jobs:
           tag_name: ${{ needs.meta.outputs.ver }}
           name: Release ${{ needs.meta.outputs.ver }}
           files: |
-            artifacts/MyApp-Windows/MyApp-Windows.exe
+            artifacts/MyApp-Windows/fuckPTA-Windows.exe
             artifacts/MyApp-Linux/MyApp-Linux
             artifacts/MyApp-macOS/MyApp-macOS
         env:
