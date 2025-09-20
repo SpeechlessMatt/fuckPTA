@@ -31,7 +31,7 @@ jobs:
             artifact: MyApp-Linux
             name: MyApp-Linux
 
-          - os: macos-latest
+          - os: macos-13
             spec: main.spec
             artifact: MyApp-macOS
             name: MyApp-macOS
