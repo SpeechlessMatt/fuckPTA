@@ -15,7 +15,7 @@ jobs:
         run: |
           TAG=${GITHUB_REF#refs/tags/}
           echo "ver=$TAG" >> $GITHUB_OUTPUT
-          
+
   build:
     needs: meta
     strategy:
@@ -40,6 +40,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Fix missing libintl (macOS only)
+        if: runner.os == 'macOS'
+        run: brew install gettext && brew link --force gettext
 
       - name: Build with PyInstaller
         uses: sayyid5416/pyinstaller@v1
