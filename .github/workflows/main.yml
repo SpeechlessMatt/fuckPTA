@@ -1,0 +1,77 @@
+name: Build all platforms
+
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+jobs:
+  meta:
+    runs-on: ubuntu-latest
+    outputs:
+      ver: ${{ steps.get.outputs.ver }}
+    steps:
+      - id: get
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          echo "ver=$TAG" >> $GITHUB_OUTPUT
+          
+  build:
+    needs: meta
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            spec: main.spec
+            artifact: MyApp-Windows.exe
+            name: MyApp-Windows
+
+          - os: ubuntu-latest
+            spec: main.spec
+            artifact: MyApp-Linux
+            name: MyApp-Linux
+
+          - os: macos-latest
+            spec: main.spec
+            artifact: MyApp-macOS
+            name: MyApp-macOS
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build with PyInstaller
+        uses: sayyid5416/pyinstaller@v1
+        with:
+          spec: ${{ matrix.spec }}
+          requirements: requirements.txt
+          options: --onefile --name MyApp
+          upload_exe_with_name: ${{ matrix.name }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: dist/${{ matrix.artifact }}
+
+  release:
+    needs: [meta, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release & Upload assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.meta.outputs.ver }}
+          name: Release ${{ needs.meta.outputs.ver }}
+          files: |
+            artifacts/MyApp-Windows/MyApp-Windows.exe
+            artifacts/MyApp-Linux/MyApp-Linux
+            artifacts/MyApp-macOS/MyApp-macOS
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
